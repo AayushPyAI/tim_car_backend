@@ -1,74 +1,91 @@
-# scrapers/cargurus/cargurus.py
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
-from time import sleep
+import requests
+import json
+import re
+
+def extract_car_details(title):
+    # Common pattern: YEAR MAKE MODEL
+    pattern = r'(\d{4})\s+([A-Za-z]+)\s+([A-Za-z0-9\s-]+)'
+    match = re.match(pattern, title)
+    if match:
+        year = match.group(1)
+        make = match.group(2)
+        model = match.group(3).strip()
+        return year, make, model
+    return None, None, None
+
+def extract_mileage(description):
+    # Pattern to match mileage in description
+    pattern = r'(\d{1,3}(?:,\d{3})*)\s*mi'
+    match = re.search(pattern, description)
+    if match:
+        return match.group(1).replace(',', '')
+    return None
+
+def extract_location(url):
+    # Extract zip code from URL
+    pattern = r'zip=(\d{5})'
+    match = re.search(pattern, url)
+    if match:
+        return f"Zip: {match.group(1)}"
+    return None
 
 def get_cargurus_listings():
-    chrome_options = Options()
-    # chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+    dataset_id = "ilDsh48oVLueUeYfk"
+    token = "apify_api_6KK0g25uue0hau5wcDnrI1P0H1sXcX0gVfpi"
+    # Replace with your real token
 
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?format=json&clean=true&token={token}"
 
-    # Use the new URL with search parameters
-    url = "https://www.cargurus.com/Cars/inventorylisting/viewDetailsFilterViewInventoryListing.action?sellerHierarchyTypes=PAYING_DEALER&searchId=40d7f03f-3b69-4084-a311-a2da607627de&zip=75093&distance=50&entitySelectingHelper.selectedEntity=m25&sourceContext=carGurusHomePageModel&sortDir=ASC&sortType=BEST_MATCH&srpVariation=DEFAULT_SEARCH&isDeliveryEnabled=true&nonShippableBaseline=0&makeModelTrimPaths=m25&makeModelTrimPaths=m40&makeModelTrimPaths=m48&makeModelTrimPaths=m34&makeModelTrimPaths=m141&makeModelTrimPaths=m121&makeModelTrimPaths=m49&makeModelTrimPaths=m39&makeModelTrimPaths=m129&makeModelTrimPaths=m48%2Fd404&makeModelTrimPaths=m48%2Fd2430&makeModelTrimPaths=m48%2Fd2416&makeModelTrimPaths=m19&makeModelTrimPaths=m19%2Fd1019&makeModelTrimPaths=m19%2Fd2230&makeModelTrimPaths=m20"
-    
-    driver.get(url)
-    sleep(6)
+    response = requests.get(url, headers={"Accept": "application/json"})
 
-    listings = []
-    cards = driver.find_elements(By.CSS_SELECTOR, 'div.inventory-listing')
+    # Debug output
+    print("Status Code:", response.status_code)
+    print("Response Text:", response.text)  # Show the error message from Apify
 
-    for card in cards:
-        try:
-            title_elem = card.find_elements(By.CSS_SELECTOR, 'h4')
-            price_elem = card.find_elements(By.CSS_SELECTOR, 'span[data-test="vehicleCardPricingBlockPrice"]')
-            link_elem = card.find_elements(By.CSS_SELECTOR, 'a')
-            image_elem = card.find_elements(By.CSS_SELECTOR, 'img')
+    try:
+        data = response.json()
+    except json.JSONDecodeError as e:
+        print("JSON Decode Error:", e)
+        return []
 
-            title = title_elem[0].text if title_elem else "N/A"
-            price = price_elem[0].text.replace("$", "").replace(",", "") if price_elem else "0"
-            url = link_elem[0].get_attribute("href") if link_elem else ""
-            image_url = image_elem[0].get_attribute("src") if image_elem else ""
-
-            # The VIN, make, model, year, mileage, location, and contact info will be extracted as well.
-            # You'll need to update the selectors based on the actual page structure.
-
-            vin = "N/A"  # Modify selector if needed
-            make = "Unknown"  # Modify selector if needed
-            model = "Unknown"  # Modify selector if needed
-            year = 2020  # Modify selector if needed
-            mileage = 0.0  # Modify selector if needed
-            location = "N/A"  # Modify selector if needed
-            contact_info = "CarGurus Internal"  # Modify selector if needed
-
-            listing = {
+    processed_listings = []
+    for car in data:
+        if isinstance(car, dict):
+            title = car.get("name", "")
+            year, make, model = extract_car_details(title)
+            description = car.get("description", "")
+            mileage = extract_mileage(description)
+            location = extract_location(car.get("url", ""))
+            
+            processed_listings.append({
                 "title": title,
-                "vin": vin,
+                "vin": car.get("id"),
                 "make": make,
                 "model": model,
                 "year": year,
                 "mileage": mileage,
-                "price": float(price),
+                "price": car.get("price"),
                 "location": location,
-                "contact_info": contact_info,
-                "image_url": image_url,
-                "listing_url": url,
-                "dealer_name": "N/A"
-            }
-            listings.append(listing)
-        except Exception as e:
-            print("Error parsing listing:", e)
-
-    driver.quit()
-    return listings
+                "contact_info": None,  # This would require scraping individual listing pages
+                "image": car.get("primaryImage"),
+                "link": car.get("url")
+            })
+    
+    return processed_listings
 
 if __name__ == "__main__":
-    data = get_cargurus_listings()
-    for d in data[:10]:
-        print(d)
+    # For testing the scraper directly
+    listings = get_cargurus_listings()
+    for car in listings:
+        print("Title:", car.get("title"))
+        print("VIN:", car.get("vin"))
+        print("Make:", car.get("make"))
+        print("Model:", car.get("model"))
+        print("Year:", car.get("year"))
+        print("Mileage:", car.get("mileage"))
+        print("Price:", car.get("price"))
+        print("Location:", car.get("location"))
+        print("Contact Info:", car.get("contact_info"))
+        print("Image:", car.get("image"))
+        print("Link:", car.get("link"))
+        print("-" * 60)
