@@ -17,4 +17,4 @@ class CarGurusListing(Base):
     contact_info = Column(String)
     image_url = Column(String)
     listing_url = Column(String)
-    dealer_name = Column(String)
+  

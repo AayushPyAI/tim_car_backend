@@ -38,10 +38,6 @@ def get_cargurus_listings():
 
     response = requests.get(url, headers={"Accept": "application/json"})
 
-    # Debug output
-    print("Status Code:", response.status_code)
-    print("Response Text:", response.text)  # Show the error message from Apify
-
     try:
         data = response.json()
     except json.JSONDecodeError as e:
@@ -67,8 +63,8 @@ def get_cargurus_listings():
                 "price": car.get("price"),
                 "location": location,
                 "contact_info": None,  # This would require scraping individual listing pages
-                "image": car.get("primaryImage"),
-                "link": car.get("url")
+                "image_url": car.get("primaryImage"),
+                "listing_url": car.get("url")
             })
     
     return processed_listings
@@ -86,6 +82,6 @@ if __name__ == "__main__":
         print("Price:", car.get("price"))
         print("Location:", car.get("location"))
         print("Contact Info:", car.get("contact_info"))
-        print("Image:", car.get("image"))
-        print("Link:", car.get("link"))
+        print("Image URL:", car.get("image_url"))
+        print("Listing URL:", car.get("listing_url"))
         print("-" * 60)

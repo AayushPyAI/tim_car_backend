@@ -14,7 +14,7 @@ class CarGurusListingBase(BaseModel):
     contact_info: Optional[str] = None
     image_url: Optional[str] = None
     listing_url: Optional[str] = None
-    dealer_name: Optional[str] = None
+  
 
 class CarGurusListingCreate(CarGurusListingBase):
     pass
