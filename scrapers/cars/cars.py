@@ -95,7 +95,7 @@ def get_detail_from_listing(driver, url):
 # Main scraper
 def get_cars_dot_com_listings():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # Uncomment to run headless
+    chrome_options.add_argument("--headless")  # Uncomment to run headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
@@ -129,8 +129,8 @@ def get_cars_dot_com_listings():
     return detailed_listings
 
 
-if __name__ == "__main__":
-    results = get_cars_dot_com_listings()
-    print(f"\n✅ Scraped {len(results)} listings:")
-    for r in results[:5]:  # Preview first 5
-        print(r)
+# if __name__ == "__main__":
+#     results = get_cars_dot_com_listings()
+#     print(f"\n✅ Scraped {len(results)} listings:")
+#     for r in results[:5]:  # Preview first 5
+#         print(r)

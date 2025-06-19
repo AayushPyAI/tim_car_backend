@@ -69,19 +69,19 @@ def get_cargurus_listings():
     
     return processed_listings
 
-if __name__ == "__main__":
-    # For testing the scraper directly
-    listings = get_cargurus_listings()
-    for car in listings:
-        print("Title:", car.get("title"))
-        print("VIN:", car.get("vin"))
-        print("Make:", car.get("make"))
-        print("Model:", car.get("model"))
-        print("Year:", car.get("year"))
-        print("Mileage:", car.get("mileage"))
-        print("Price:", car.get("price"))
-        print("Location:", car.get("location"))
-        print("Contact Info:", car.get("contact_info"))
-        print("Image URL:", car.get("image_url"))
-        print("Listing URL:", car.get("listing_url"))
-        print("-" * 60)
+# if __name__ == "__main__":
+#     # For testing the scraper directly
+#     listings = get_cargurus_listings()
+#     for car in listings:
+#         print("Title:", car.get("title"))
+#         print("VIN:", car.get("vin"))
+#         print("Make:", car.get("make"))
+#         print("Model:", car.get("model"))
+#         print("Year:", car.get("year"))
+#         print("Mileage:", car.get("mileage"))
+#         print("Price:", car.get("price"))
+#         print("Location:", car.get("location"))
+#         print("Contact Info:", car.get("contact_info"))
+#         print("Image URL:", car.get("image_url"))
+#         print("Listing URL:", car.get("listing_url"))
+#         print("-" * 60)

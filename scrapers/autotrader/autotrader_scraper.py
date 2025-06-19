@@ -37,7 +37,7 @@ def parse_title_fields(title: str):
 
 def get_autotrader_listings():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # Enable this when running headless
+    chrome_options.add_argument("--headless")  # Enable this when running headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
@@ -121,8 +121,8 @@ def get_autotrader_listings():
     return listings
 
 
-if __name__ == "__main__":
-    results = get_autotrader_listings()
-    print(f"Found {len(results)} listings:\n")
-    for item in results[:60]:
-        print(item)
+# if __name__ == "__main__":
+#     results = get_autotrader_listings()
+#     print(f"Found {len(results)} listings:\n")
+#     for item in results[:60]:
+#         print(item)

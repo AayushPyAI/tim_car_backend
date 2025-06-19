@@ -70,7 +70,7 @@ def scrape_listing_details(driver, url):
 
 def get_ebay_listings():
     options = Options()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920,1080")
@@ -129,8 +129,8 @@ def get_ebay_listings():
     driver.quit()
     return listing_data
 
-if __name__ == "__main__":
-    data = get_ebay_listings()
-    print(f"✅ Scraped {len(data)} listings.")
-    for d in data[:3]:  # Show first 3
-        print(d)
+# if __name__ == "__main__":
+#     data = get_ebay_listings()
+#     print(f"✅ Scraped {len(data)} listings.")
+#     for d in data[:3]:  # Show first 3
+#         print(d)

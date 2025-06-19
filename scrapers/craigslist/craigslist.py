@@ -76,7 +76,7 @@ def enrich_listing_details(driver, listing):
 
 def get_craigslist_listings():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # Uncomment to run headless
+    chrome_options.add_argument("--headless")  # Uncomment to run headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
@@ -149,8 +149,8 @@ def get_craigslist_listings():
     driver.quit()
     return listings
 
-if __name__ == "__main__":
-    results = get_craigslist_listings()
-    print(f"Final enriched listings: {len(results)}\n")
-    for item in results[:10]:
-        print(item)
+# if __name__ == "__main__":
+#     results = get_craigslist_listings()
+#     print(f"Final enriched listings: {len(results)}\n")
+#     for item in results[:10]:
+#         print(item)

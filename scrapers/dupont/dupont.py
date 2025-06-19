@@ -8,7 +8,7 @@ from time import sleep
 
 def get_dupont_listings():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
@@ -106,10 +106,10 @@ def get_dupont_listings():
     driver.quit()
     return listings
 
-if __name__ == "__main__":
-    data = get_dupont_listings()
-    for d in data:
-        print(d)
+# if __name__ == "__main__":
+#     data = get_dupont_listings()
+#     for d in data:
+#         print(d)
 
 
 
