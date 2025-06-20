@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
+import re
 
 # Parse year, make, and model from title
 def parse_title_fields(title: str):
@@ -84,9 +85,23 @@ def get_detail_from_listing(driver, url):
             value = dd.text.strip()
             details[key] = value
 
-        # Extract contact info (phone number)
-        phone_elem = driver.find_elements(By.CSS_SELECTOR, "div.dealer-phone")
-        details["contact_info"] = phone_elem[0].text if phone_elem else "N/A"
+        # Extract contact info (phone number) from new structure
+        try:
+            phone_elem = driver.find_element(By.CSS_SELECTOR, "div.vehicle-dealer section.dealer-phone-section div.dealer-phone")
+            details["contact_info"] = phone_elem.text.strip()
+        except Exception:
+            # fallback to old selector if needed
+            phone_elem = driver.find_elements(By.CSS_SELECTOR, "div.dealer-phone")
+            if phone_elem:
+                details["contact_info"] = phone_elem[0].text.strip()
+            else:
+                # Fallback: search for a US phone number in the page source
+                page_source = driver.page_source
+                match = re.search(r'(\\(\\d{3}\\) \\d{3}-\\d{4})', page_source)
+                if match:
+                    details["contact_info"] = match.group(1)
+                else:
+                    details["contact_info"] = "N/A"
 
     except Exception as e:
         print(f"Error scraping detail page {url}:", e)
@@ -129,8 +144,8 @@ def get_cars_dot_com_listings():
     return detailed_listings
 
 
-# if __name__ == "__main__":
-#     results = get_cars_dot_com_listings()
-#     print(f"\n✅ Scraped {len(results)} listings:")
-#     for r in results[:5]:  # Preview first 5
-#         print(r)
+if __name__ == "__main__":
+    results = get_cars_dot_com_listings()
+    print(f"\n✅ Scraped {len(results)} listings:")
+    for r in results[:5]:  # Preview first 5
+        print(r)
