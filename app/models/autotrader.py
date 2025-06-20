@@ -15,4 +15,4 @@ class AutotraderListing(Base):
     location = Column(String)
     contact_info = Column(Text)
     image_url = Column(Text)
-    listing_url = Column(Text)
+    listing_url = Column(Text, unique=True)

@@ -16,5 +16,5 @@ class CarGurusListing(Base):
     location = Column(String)
     contact_info = Column(String)
     image_url = Column(String)
-    listing_url = Column(String)
+    listing_url = Column(String, unique=True)
   
