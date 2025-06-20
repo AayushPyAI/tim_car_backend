@@ -13,6 +13,7 @@ class EbayListingCreate(BaseModel):
     contact_info: str
     image_url: str
     listing_url: str
+    item_number: Optional[str] = None
     # seller_rating: Optional[str] = None  # ebay-specific
 
 class EbayListingOut(EbayListingCreate):

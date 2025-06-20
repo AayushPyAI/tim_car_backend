@@ -16,4 +16,5 @@ class EbayListing(Base):
     contact_info = Column(Text)
     image_url = Column(Text)
     listing_url = Column(Text, unique=True)
+    item_number = Column(String, unique=True, index=True)
     # seller_rating = Column(String, nullable=True)  # ebay-specific

@@ -6,6 +6,8 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 from selenium.webdriver.support.ui import WebDriverWait
+import re
+
 def get_detail_value(driver, label_text=None, class_keyword=None):
     try:
         if class_keyword:
@@ -68,6 +70,10 @@ def scrape_listing_details(driver, url):
             "contact_info": "eBay internal message", "dealer_name": "N/A", "is_private_seller": True
         }
 
+def extract_ebay_item_number(url):
+    match = re.search(r'/itm/(\d+)', url)
+    return match.group(1) if match else None
+
 def get_ebay_listings():
     options = Options()
     options.add_argument("--headless")
@@ -97,11 +103,15 @@ def get_ebay_listings():
             link_elem = item.find_element(By.CSS_SELECTOR, "a.bsig__title__wrapper")
             image_elem = item.find_element(By.CSS_SELECTOR, "img")
 
+            listing_url = link_elem.get_attribute("href")
+            item_number = extract_ebay_item_number(listing_url)
+
             collected_urls.append({
                 "title": title_elem.text.strip(),
                 "price": float(price_elem.text.replace('$', '').replace(',', '').strip()),
-                "listing_url": link_elem.get_attribute("href"),
-                "image_url": image_elem.get_attribute("src")
+                "listing_url": listing_url,
+                "image_url": image_elem.get_attribute("src"),
+                "item_number": item_number
             })
 
         except Exception as e:
@@ -109,7 +119,7 @@ def get_ebay_listings():
             continue
 
     # 💡 Step 2: Now loop through collected URLs and scrape details
-    for item in collected_urls[:3]: 
+    for item in collected_urls: 
         details = scrape_listing_details(driver, item["listing_url"])
 
         listing = {
@@ -121,7 +131,6 @@ def get_ebay_listings():
             "mileage": details["mileage"],
             "location": details["location"],
             "contact_info": details["contact_info"]
-         
         }
 
         listing_data.append(listing)
