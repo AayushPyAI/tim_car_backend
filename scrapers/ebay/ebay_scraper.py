@@ -106,11 +106,22 @@ def get_ebay_listings():
             listing_url = link_elem.get_attribute("href")
             item_number = extract_ebay_item_number(listing_url)
 
+            # Only use .webp image URLs, checking both src and data-originalsrc
+            image_urls = []
+            for img in item.find_elements(By.CSS_SELECTOR, "img"):
+                src = img.get_attribute("src")
+                data_originalsrc = img.get_attribute("data-originalsrc")
+                if src and src.endswith('.webp'):
+                    image_urls.append(src)
+                if data_originalsrc and data_originalsrc.endswith('.webp'):
+                    image_urls.append(data_originalsrc)
+            image_url = image_urls[0] if image_urls else ''
+
             collected_urls.append({
                 "title": title_elem.text.strip(),
                 "price": float(price_elem.text.replace('$', '').replace(',', '').strip()),
                 "listing_url": listing_url,
-                "image_url": image_elem.get_attribute("src"),
+                "image_url": image_url,
                 "item_number": item_number
             })
 
