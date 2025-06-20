@@ -4,6 +4,9 @@ import app.models.dupont as models
 import app.schemas.dupont as schemas
 
 def create_listing(db: Session, listing: schemas.DupontListingCreate):
+    existing = db.query(models.DupontListing).filter(models.DupontListing.listing_url == listing.listing_url).first()
+    if existing:
+        return existing
     db_listing = models.DupontListing(**listing.dict())
     db.add(db_listing)
     db.commit()

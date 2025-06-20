@@ -3,6 +3,9 @@ from app.models.craigslist import CraigslistListing
 from app.schemas.craigslist import CraigslistListingCreate
 
 def create_listing(db: Session, listing: CraigslistListingCreate):
+    existing = db.query(CraigslistListing).filter(CraigslistListing.listing_url == listing.listing_url).first()
+    if existing:
+        return existing
     db_listing = CraigslistListing(**listing.dict())
     db.add(db_listing)
     db.commit()

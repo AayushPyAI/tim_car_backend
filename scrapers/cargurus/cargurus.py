@@ -30,58 +30,66 @@ def extract_location(url):
     return None
 
 def get_cargurus_listings():
-    dataset_id = "ilDsh48oVLueUeYfk"
+    dataset_id = "w4IItggqcqOcrWVSp"
     token = "apify_api_6KK0g25uue0hau5wcDnrI1P0H1sXcX0gVfpi"
-    # Replace with your real token
+    base_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
+    all_listings = []
+    limit = 100  # You can set this up to 1000 if needed
+    offset = 0
 
-    url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?format=json&clean=true&token={token}"
+    while True:
+        url = f"{base_url}?format=json&clean=true&token={token}&limit={limit}&offset={offset}"
+        response = requests.get(url, headers={"Accept": "application/json"})
+        try:
+            data = response.json()
+        except json.JSONDecodeError as e:
+            print("JSON Decode Error:", e)
+            break
 
-    response = requests.get(url, headers={"Accept": "application/json"})
+        if not data:
+            break  # No more data
 
-    try:
-        data = response.json()
-    except json.JSONDecodeError as e:
-        print("JSON Decode Error:", e)
-        return []
+        processed_listings = []
+        for car in data:
+            if isinstance(car, dict):
+                title = car.get("name", "")
+                year, make, model = extract_car_details(title)
+                description = car.get("description", "")
+                mileage = extract_mileage(description)
+                location = extract_location(car.get("url", ""))
+                
+                processed_listings.append({
+                    "title": title,
+                    "vin": car.get("id"),
+                    "make": make,
+                    "model": model,
+                    "year": year,
+                    "mileage": mileage,
+                    "price": car.get("price"),
+                    "location": location,
+                    "contact_info": None, 
+                    "image_url": car.get("primaryImage"),
+                    "listing_url": car.get("url")
+                })
+        
+        all_listings.extend(processed_listings)
+        offset += limit
 
-    processed_listings = []
-    for car in data:
-        if isinstance(car, dict):
-            title = car.get("name", "")
-            year, make, model = extract_car_details(title)
-            description = car.get("description", "")
-            mileage = extract_mileage(description)
-            location = extract_location(car.get("url", ""))
-            
-            processed_listings.append({
-                "title": title,
-                "vin": car.get("id"),
-                "make": make,
-                "model": model,
-                "year": year,
-                "mileage": mileage,
-                "price": car.get("price"),
-                "location": location,
-                "contact_info": None,  # This would require scraping individual listing pages
-                "image_url": car.get("primaryImage"),
-                "listing_url": car.get("url")
-            })
-    
-    return processed_listings
+    return all_listings
 
-# if __name__ == "__main__":
-#     # For testing the scraper directly
-#     listings = get_cargurus_listings()
-#     for car in listings:
-#         print("Title:", car.get("title"))
-#         print("VIN:", car.get("vin"))
-#         print("Make:", car.get("make"))
-#         print("Model:", car.get("model"))
-#         print("Year:", car.get("year"))
-#         print("Mileage:", car.get("mileage"))
-#         print("Price:", car.get("price"))
-#         print("Location:", car.get("location"))
-#         print("Contact Info:", car.get("contact_info"))
-#         print("Image URL:", car.get("image_url"))
-#         print("Listing URL:", car.get("listing_url"))
-#         print("-" * 60)
+if __name__ == "__main__":
+    # For testing the scraper directly
+    listings = get_cargurus_listings()
+    for car in listings:
+        print("Title:", car.get("title"))
+        print("VIN:", car.get("vin"))
+        print("Make:", car.get("make"))
+        print("Model:", car.get("model"))
+        print("Year:", car.get("year"))
+        print("Mileage:", car.get("mileage"))
+        print("Price:", car.get("price"))
+        print("Location:", car.get("location"))
+        print("Contact Info:", car.get("contact_info"))
+        print("Image URL:", car.get("image_url"))
+        print("Listing URL:", car.get("listing_url"))
+        print("-" * 60)

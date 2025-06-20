@@ -3,6 +3,9 @@ from app.models.ebay import EbayListing
 from app.schemas.ebay import EbayListingCreate
 
 def create_listing(db: Session, listing: EbayListingCreate):
+    existing = db.query(EbayListing).filter(EbayListing.listing_url == listing.listing_url).first()
+    if existing:
+        return existing
     db_listing = EbayListing(**listing.dict())
     db.add(db_listing)
     db.commit()

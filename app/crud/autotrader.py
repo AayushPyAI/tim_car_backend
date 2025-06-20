@@ -3,6 +3,9 @@ from app.models.autotrader import AutotraderListing
 from app.schemas.autotrader import AutotraderListingCreate
 
 def create_listing(db: Session, listing: AutotraderListingCreate):
+    existing = db.query(AutotraderListing).filter(AutotraderListing.listing_url == listing.listing_url).first()
+    if existing:
+        return existing
     db_listing = AutotraderListing(**listing.dict())
     db.add(db_listing)
     db.commit()

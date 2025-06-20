@@ -1,10 +1,12 @@
-
 # crud/cargurus.py
 from sqlalchemy.orm import Session
 import app.models.cargurus as models
 import app.schemas.cargurus as schemas
 
 def create_listing(db: Session, listing: schemas.CarGurusListingCreate):
+    existing = db.query(models.CarGurusListing).filter(models.CarGurusListing.listing_url == listing.listing_url).first()
+    if existing:
+        return existing
     db_listing = models.CarGurusListing(**listing.dict())
     db.add(db_listing)
     db.commit()
