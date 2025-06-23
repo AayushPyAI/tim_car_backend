@@ -37,7 +37,7 @@ def get_dupont_listings():
     listings = []
     cards = driver.find_elements(By.CSS_SELECTOR, 'div.LilCards-module_product_wrapper__FkNih')
 
-    for card in cards[:3]:  # Limiting to first 10 for speed; increase if needed
+    for card in cards:  # Limiting to first 10 for speed; increase if needed
         try:
             title_elem = card.find_element(By.CSS_SELECTOR, 'h2 a')
             title = title_elem.text.strip()

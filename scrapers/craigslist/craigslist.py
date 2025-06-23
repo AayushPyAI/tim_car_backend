@@ -90,7 +90,7 @@ def get_craigslist_listings():
     listings = []
     cards = driver.find_elements(By.CSS_SELECTOR, 'div.gallery-card')
 
-    for card in cards[:3]:
+    for card in cards:
         try:
             title_elem = card.find_element(By.CSS_SELECTOR, 'a.posting-title span.label')
             price_elem = card.find_element(By.CSS_SELECTOR, 'span.priceinfo')
