@@ -5,7 +5,7 @@ import app.schemas.cars as schemas
 import app.crud.cars as crud
 from scrapers.cars.cars import get_cars_dot_com_listings
 
-router = APIRouter(prefix="/cars", tags=["Cars.com"])
+router = APIRouter(prefix="/api/cars", tags=["Cars.com"])
 
 @router.post("/create", response_model=schemas.CarsDotComListingOut)
 def create(listing: schemas.CarsDotComListingCreate, db: Session = Depends(get_db)):

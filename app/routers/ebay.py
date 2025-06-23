@@ -5,7 +5,7 @@ from app.schemas.ebay import EbayListingCreate, EbayListingOut
 from app.crud import ebay as crud_ebay
 from scrapers.ebay.ebay_scraper import get_ebay_listings
 
-router = APIRouter(prefix="/ebay", tags=["ebay"])
+router = APIRouter(prefix="/api/ebay", tags=["ebay"])
 
 def get_db():
     db = SessionLocal()
@@ -22,7 +22,7 @@ def create_ebay_listing(listing: EbayListingCreate, db: Session = Depends(get_db
 def read_ebay_listings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud_ebay.get_listings(db, skip=skip, limit=limit)
 
-@router.post("/scrape/")
+@router.post("/scrape")
 def scrape_and_save(db: Session = Depends(get_db)):
     listings = get_ebay_listings()
     results = []

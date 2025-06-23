@@ -5,7 +5,7 @@ import app.schemas.craigslist as schemas
 import app.crud.craigslist as crud
 from scrapers.craigslist.craigslist import get_craigslist_listings
 
-router = APIRouter(prefix="/craigslist", tags=["Craigslist"])
+router = APIRouter(prefix="/api/craigslist", tags=["Craigslist"])
 
 @router.post("/create", response_model=schemas.CraigslistListingOut)
 def create(listing: schemas.CraigslistListingCreate, db: Session = Depends(get_db)):

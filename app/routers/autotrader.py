@@ -5,7 +5,7 @@ from app.schemas.autotrader import AutotraderListingCreate, AutotraderListingOut
 from app.crud import autotrader as crud_autotrader
 from scrapers.autotrader.autotrader_scraper import get_autotrader_listings
 
-router = APIRouter(prefix="/autotrader", tags=["autotrader"])
+router = APIRouter(prefix="/api/autotrader", tags=["autotrader"])
 
 def get_db():
     db = SessionLocal()
@@ -22,7 +22,7 @@ def create_autotrader_listing(listing: AutotraderListingCreate, db: Session = De
 def read_autotrader_listings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud_autotrader.get_listings(db, skip=skip, limit=limit)
 
-@router.post("/scrape/")
+@router.post("/scrape")
 def scrape_and_save(db: Session = Depends(get_db)):
     listings = get_autotrader_listings()
     results = []

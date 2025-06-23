@@ -7,7 +7,7 @@ import app.schemas.cargurus as schemas
 import app.crud.cargurus as crud
 from scrapers.cargurus.cargurus import get_cargurus_listings
 
-router = APIRouter(prefix="/cargurus", tags=["CarGurus"])
+router = APIRouter(prefix="/api/cargurus", tags=["CarGurus"])
 
 @router.post("/create", response_model=schemas.CarGurusListingOut)
 def create(listing: schemas.CarGurusListingCreate, db: Session = Depends(get_db)):

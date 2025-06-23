@@ -5,7 +5,7 @@ from app.schemas.ove import OVEListingCreate, OVEListingOut
 from app.crud import ove as crud_ove
 from scrapers.ove.ove_scraper import get_ove_listings
 
-router = APIRouter(prefix="/ove", tags=["ove"])
+router = APIRouter(prefix="/api/ove", tags=["ove"])
 
 def get_db():
     db = SessionLocal()

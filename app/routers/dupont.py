@@ -6,7 +6,7 @@ import app.schemas.dupont as schemas
 import app.crud.dupont as crud
 from scrapers.dupont.dupont import get_dupont_listings
 
-router = APIRouter(prefix="/dupont", tags=["Dupont Registry"])
+router = APIRouter(prefix="/api/dupont", tags=["Dupont Registry"])
 
 @router.post("/create", response_model=schemas.DupontListingOut)
 def create(listing: schemas.DupontListingCreate, db: Session = Depends(get_db)):
