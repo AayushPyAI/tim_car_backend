@@ -5,6 +5,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def parse_title_fields(title: str):
@@ -37,15 +39,29 @@ def parse_title_fields(title: str):
 
 def get_autotrader_listings():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Enable this when running headless
+   # chrome_options.add_argument("--headless")  # Enable this when running headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    # Disable images and CSS for faster loading
+    prefs = {
+        "profile.managed_default_content_settings.images": 2,
+        "profile.managed_default_content_settings.stylesheets": 2
+    }
+    chrome_options.add_experimental_option("prefs", prefs)
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    driver.get("https://www.autotrader.com/cars-for-sale/by-owner/plano-tx?searchRadius=0&zip=75023")
-    sleep(6)  # Let JS content load
+    driver.get("https://www.autotrader.com/cars-for-sale/by-owner/plano-tx?marketExtension=off&searchRadius=0&zip=75023...it")
+    # Wait for cards to load instead of fixed sleep
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-cmp="itemCard"]'))
+        )
+    except Exception as e:
+        print("Timeout waiting for main page to load:", e)
+        driver.quit()
+        return []
 
     listings = []
     cards = driver.find_elements(By.CSS_SELECTOR, 'div[data-cmp="itemCard"]')
@@ -100,7 +116,14 @@ def get_autotrader_listings():
                 continue
 
             driver.get(listing_url)
-            sleep(5)
+            # Wait for VIN section to load instead of fixed sleep
+            try:
+                WebDriverWait(driver, 8).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-cmp="section"] .text-gray-dark'))
+                )
+            except Exception as e:
+                print(f"Timeout waiting for detail page {listing_url}:", e)
+                continue
 
             # Extract VIN
             vin_elem = driver.find_elements(By.CSS_SELECTOR, 'div[data-cmp="section"] .text-gray-dark')
@@ -121,8 +144,8 @@ def get_autotrader_listings():
     return listings
 
 
-# if __name__ == "__main__":
-#     results = get_autotrader_listings()
-#     print(f"Found {len(results)} listings:\n")
-#     for item in results[:60]:
-#         print(item)
+if __name__ == "__main__":
+    results = get_autotrader_listings()
+    print(f"Found {len(results)} listings:\n")
+    for item in results[:3]:
+        print(item)
