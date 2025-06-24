@@ -120,7 +120,7 @@ def get_cars_dot_com_listings():
     listings_summary = get_listing_links(driver)
 
     detailed_listings = []
-    for item in listings_summary[:3]:
+    for item in listings_summary:
         detail_data = get_detail_from_listing(driver, item["listing_url"])
         year, make, model = parse_title_fields(item["title"])
 
@@ -144,8 +144,8 @@ def get_cars_dot_com_listings():
     return detailed_listings
 
 
-if __name__ == "__main__":
-    results = get_cars_dot_com_listings()
-    print(f"\n✅ Scraped {len(results)} listings:")
-    for r in results[:5]:  # Preview first 5
-        print(r)
+# if __name__ == "__main__":
+#     results = get_cars_dot_com_listings()
+#     print(f"\n✅ Scraped {len(results)} listings:")
+#     for r in results[:5]:  # Preview first 5
+#         print(r)
