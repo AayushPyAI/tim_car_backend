@@ -39,9 +39,17 @@ def parse_title_fields(title: str):
 
 def get_autotrader_listings():
     chrome_options = Options()
-   # chrome_options.add_argument("--headless")  # Enable this when running headless
+    chrome_options.add_argument("--headless")  # Enable this when running headless
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    
+    # Add arguments to make scraper appear more human
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+
     # Disable images and CSS for faster loading
     prefs = {
         "profile.managed_default_content_settings.images": 2,
@@ -51,6 +59,7 @@ def get_autotrader_listings():
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
     driver.get("https://www.autotrader.com/cars-for-sale/by-owner/plano-tx?marketExtension=off&searchRadius=0&zip=75023...it")
     # Wait for cards to load instead of fixed sleep
@@ -116,26 +125,56 @@ def get_autotrader_listings():
                 continue
 
             driver.get(listing_url)
-            # Wait for VIN section to load instead of fixed sleep
+            # Wait for VIN to be present on the page
             try:
-                WebDriverWait(driver, 8).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-cmp="section"] .text-gray-dark'))
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'VIN')]"))
                 )
             except Exception as e:
-                print(f"Timeout waiting for detail page {listing_url}:", e)
+                print(f"Timeout waiting for VIN on detail page {listing_url}:", e)
                 continue
 
-            # Extract VIN
-            vin_elem = driver.find_elements(By.CSS_SELECTOR, 'div[data-cmp="section"] .text-gray-dark')
-            vin_text = vin_elem[0].text if vin_elem else ""
-            vin_match = re.search(r'VIN[:\s]*([A-HJ-NPR-Z0-9]{17})', vin_text)
-            listing["vin"] = vin_match.group(1) if vin_match else None
+            # Initialize VIN and Location to ensure they are reset for each listing
+            listing["vin"] = None
+            listing["location"] = None
 
-            # Extract Location
-            location_container = driver.find_elements(By.CSS_SELECTOR, 'div.display-flex.align-items-center.flex-wrap.gap-2')
-            if location_container:
-                span_elems = location_container[0].find_elements(By.TAG_NAME, "span")
-                listing["location"] = span_elems[0].text.strip() if span_elems else None
+            # --- VIN Scraping: Try all known methods ---
+
+            # Method 1: Check in the 'sellerComments' section
+            try:
+                vin_element = driver.find_element(By.XPATH, "//div[@id='sellerComments']//span[contains(., 'VIN:')]")
+                vin_text = vin_element.text
+                vin_match = re.search(r'([A-HJ-NPR-Z0-9]{17})', vin_text)
+                if vin_match:
+                    listing["vin"] = vin_match.group(1)
+            except Exception:
+                pass  # VIN not found with this method, continue
+
+            # Method 2: Fallback to a page-wide regex search if still not found
+            if not listing["vin"]:
+                try:
+                    vin_match = re.search(r'VIN[:\s]*([A-HJ-NPR-Z0-9]{17})', driver.page_source)
+                    if vin_match:
+                        listing["vin"] = vin_match.group(1)
+                except Exception:
+                    pass # VIN not found here either
+
+            # --- Location Scraping: Try all known methods ---
+
+            # Method 1: Check in the 'psxOwnerDetailsSnapshot' section
+            try:
+                location_element = driver.find_element(By.XPATH, "//div[@data-cmp='psxOwnerDetailsSnapshot']//span[contains(., ',')]")
+                listing["location"] = location_element.text.strip()
+            except Exception:
+                pass  # Location not found with this method, continue
+
+            # Method 2: Check for the older 'ownerLocation' format if still not found
+            if not listing["location"]:
+                try:
+                    location_elem = driver.find_element(By.CSS_SELECTOR, "div[data-cmp='ownerLocation'] span")
+                    listing["location"] = location_elem.text.strip()
+                except Exception:
+                    pass  # Location not found, will remain None
 
         except Exception as e:
             print(f"Error scraping details from {listing.get('listing_url')}: {e}")
@@ -147,5 +186,5 @@ def get_autotrader_listings():
 if __name__ == "__main__":
     results = get_autotrader_listings()
     print(f"Found {len(results)} listings:\n")
-    for item in results[:3]:
+    for item in results:
         print(item)
