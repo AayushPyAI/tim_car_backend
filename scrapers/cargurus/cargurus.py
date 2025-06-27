@@ -49,7 +49,7 @@ def get_cargurus_listings(
     all_listings = []
 
     for dataset_id in dataset_ids:
-        logging.info(f"\n🔍 Fetching data for dataset: {dataset_id}")
+        
         base_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
         limit = 100
         offset = 0
@@ -61,7 +61,7 @@ def get_cargurus_listings(
             try:
                 data = response.json()
             except json.JSONDecodeError as e:
-                logging.error(f"JSON Decode Error in dataset {dataset_id}: {e}")
+                
                 break
 
             if not data:
