@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.schemas.autotrader import AutotraderListingCreate, AutotraderListingOut
 from app.crud import autotrader as crud_autotrader
-from scrapers.autotrader.autotrader_scraper import get_autotrader_listings
+from scrapers.autotrader.autotrader_scraper import get_autotrader_listings, fetch_detail_info
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 router = APIRouter(prefix="/api/autotrader", tags=["autotrader"])
 
@@ -24,9 +25,15 @@ def read_autotrader_listings(skip: int = 0, limit: int = 100, db: Session = Depe
 
 @router.post("/scrape")
 def scrape_and_save(db: Session = Depends(get_db)):
-    listings = get_autotrader_listings()
+    summaries = get_autotrader_listings()
     results = []
-    for item in listings:
+    # Fetch details for each listing (parallel for speed)
+    detailed = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_listing = {executor.submit(fetch_detail_info, l): l for l in summaries}
+        for future in as_completed(future_to_listing):
+            detailed.append(future.result())
+    for item in detailed:
         try:
             listing_obj = AutotraderListingCreate(**item)
             saved = crud_autotrader.create_listing(db, listing_obj)
