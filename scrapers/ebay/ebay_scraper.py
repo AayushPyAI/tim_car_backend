@@ -87,70 +87,76 @@ def get_ebay_listings():
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
-    url = "https://www.ebay.com/b/Private-Seller-Cars-and-Trucks/6001/bn_55180091?mag=1&Make=ASTON%2520MARTIN%7CAudi%7CBentley%7CBugatti%7CFerrari%7CLamborghini%7CMaserati%7CMcLaren%7CPorsche%7CRolls%252DRoyce%7CVolkswagen"
-    driver.get(url)
-    time.sleep(5)
-
+    base_url = "https://www.ebay.com/b/Private-Seller-Cars-and-Trucks/6001/bn_55180091?mag=1&Make=ASTON%2520MARTIN%7CFerrari%7CLamborghini%7CMcLaren%7CPorsche%7CRolls%252DRoyce"
     listing_data = []
-    raw_items = driver.find_elements(By.CSS_SELECTOR, "li.brwrvr__item-card")
 
-    # 💡 Step 1: Collect all the basic data + URLs first
-    collected_urls = []
-    for item in raw_items:
-        try:
-            title_elem = item.find_element(By.CSS_SELECTOR, "h3.bsig__title__text")
-            price_elem = item.find_element(By.CSS_SELECTOR, "span.bsig__price--displayprice")
-            link_elem = item.find_element(By.CSS_SELECTOR, "a.bsig__title__wrapper")
-            image_elem = item.find_element(By.CSS_SELECTOR, "img")
+    for page in range(1, 4):  # Pages 1 to 3
+        if page == 1:
+            url = base_url
+        else:
+            url = f"{base_url}&_pgn={page}&rt=nc"
+        driver.get(url)
+        time.sleep(5)
 
-            listing_url = link_elem.get_attribute("href")
-            item_number = extract_ebay_item_number(listing_url)
+        raw_items = driver.find_elements(By.CSS_SELECTOR, "li.brwrvr__item-card")
 
-            # Only use .webp image URLs, checking both src and data-originalsrc
-            image_urls = []
-            for img in item.find_elements(By.CSS_SELECTOR, "img"):
-                src = img.get_attribute("src")
-                data_originalsrc = img.get_attribute("data-originalsrc")
-                if src and src.endswith('.webp'):
-                    image_urls.append(src)
-                if data_originalsrc and data_originalsrc.endswith('.webp'):
-                    image_urls.append(data_originalsrc)
-            image_url = image_urls[0] if image_urls else ''
+        # 💡 Step 1: Collect all the basic data + URLs first
+        collected_urls = []
+        for item in raw_items:
+            try:
+                title_elem = item.find_element(By.CSS_SELECTOR, "h3.bsig__title__text")
+                price_elem = item.find_element(By.CSS_SELECTOR, "span.bsig__price--displayprice")
+                link_elem = item.find_element(By.CSS_SELECTOR, "a.bsig__title__wrapper")
+                image_elem = item.find_element(By.CSS_SELECTOR, "img")
 
-            collected_urls.append({
-                "title": title_elem.text.strip(),
-                "price": float(price_elem.text.replace('$', '').replace(',', '').strip()),
-                "listing_url": listing_url,
-                "image_url": image_url,
-                "item_number": item_number
-            })
+                listing_url = link_elem.get_attribute("href")
+                item_number = extract_ebay_item_number(listing_url)
 
-        except Exception as e:
-            print("⚠️ Error collecting from listing:", e)
-            continue
+                # Only use .webp image URLs, checking both src and data-originalsrc
+                image_urls = []
+                for img in item.find_elements(By.CSS_SELECTOR, "img"):
+                    src = img.get_attribute("src")
+                    data_originalsrc = img.get_attribute("data-originalsrc")
+                    if src and src.endswith('.webp'):
+                        image_urls.append(src)
+                    if data_originalsrc and data_originalsrc.endswith('.webp'):
+                        image_urls.append(data_originalsrc)
+                image_url = image_urls[0] if image_urls else ''
 
-    # 💡 Step 2: Now loop through collected URLs and scrape details
-    for item in collected_urls: 
-        details = scrape_listing_details(driver, item["listing_url"])
+                collected_urls.append({
+                    "title": title_elem.text.strip(),
+                    "price": float(price_elem.text.replace('$', '').replace(',', '').strip()),
+                    "listing_url": listing_url,
+                    "image_url": image_url,
+                    "item_number": item_number
+                })
 
-        listing = {
-            **item,
-            "vin": details["vin"],
-            "make": details["make"],  # optional logic later
-            "model": details["model"],
-            "year": details["year"],
-            "mileage": details["mileage"],
-            "location": details["location"],
-            "contact_info": details["contact_info"]
-        }
+            except Exception as e:
+                print("⚠️ Error collecting from listing:", e)
+                continue
 
-        listing_data.append(listing)
+        # 💡 Step 2: Now loop through collected URLs and scrape details
+        for item in collected_urls: 
+            details = scrape_listing_details(driver, item["listing_url"])
+
+            listing = {
+                **item,
+                "vin": details["vin"],
+                "make": details["make"],  # optional logic later
+                "model": details["model"],
+                "year": details["year"],
+                "mileage": details["mileage"],
+                "location": details["location"],
+                "contact_info": details["contact_info"]
+            }
+
+            listing_data.append(listing)
 
     driver.quit()
     return listing_data
 
-# if __name__ == "__main__":
-#     data = get_ebay_listings()
-#     print(f"✅ Scraped {len(data)} listings.")
-#     for d in data[:3]:  # Show first 3
-#         print(d)
+if __name__ == "__main__":
+    data = get_ebay_listings()
+    print(f"✅ Scraped {len(data)} listings.")
+    for d in data[:3]:  # Show first 3
+        print(d)
