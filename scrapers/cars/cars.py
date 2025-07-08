@@ -38,7 +38,7 @@ def parse_title_fields(title: str):
 
 # Step 1: Extract listing URLs and basic info
 def get_listing_links(driver):
-    driver.get("https://www.cars.com/shopping/results/?clean_title=true&dealer_id=&include_shippable=false&keyword=&list_price_max=&list_price_min=&makes%5C=&page=1&page_size=100&zip=75093")
+    driver.get("https://www.cars.com/shopping/results/?clean_title=true&dealer_id=&include_shippable=false&keyword=&list_price_max=&list_price_min=&makes%5C=&page=1&page_size=20&zip=75093")
     sleep(6)
 
     listings = []
