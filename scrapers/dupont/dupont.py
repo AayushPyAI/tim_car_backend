@@ -21,12 +21,11 @@ def get_dupont_listings():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.set_page_load_timeout(180)
 
-    # List of (brand, url) pairs
     brand_urls = [
+        ("lamborghini", "https://www.dupontregistry.com/autos/results/lamborghini/all/private"),
         ("ferrari", "https://www.dupontregistry.com/autos/results/ferrari/all/private/filter:page_end=2&page_start=1"),
         ("aston martin", "https://www.dupontregistry.com/autos/results/aston--martin/all/private"),
         ("bentley", "https://www.dupontregistry.com/autos/results/bentley/all/private"),
-        ("lamborghini", "https://www.dupontregistry.com/autos/results/lamborghini/all/private"),
         ("mclaren", "https://www.dupontregistry.com/autos/results/mclaren/all/private"),
         ("porsche", "https://www.dupontregistry.com/autos/results/porsche/all/private"),
         ("rolls royce", "https://www.dupontregistry.com/autos/results/rolls-royce/all/private"),
@@ -38,12 +37,17 @@ def get_dupont_listings():
         try:
             driver.get(url)
             wait = WebDriverWait(driver, 30)
-            cards = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.LilCards-module_product_wrapper__FkNih')))
+            # Wait for the heading to ensure the page is loaded
+            wait.until(EC.presence_of_element_located((By.XPATH, "//div[@id='autosTitle']")))
+            # Find the correct container for car cards
+            autos_container = driver.find_element(
+                By.XPATH,
+                "//div[@id='autosTitle']/following-sibling::div[@data-test='Autos']"
+            )
+            cards = autos_container.find_elements(By.CSS_SELECTOR, 'div.LilCards-module_product_wrapper__FkNih')
         except Exception as e:
             print(f"Error loading page or finding cards for {brand}:", e)
             continue
-
-        cards = driver.find_elements(By.CSS_SELECTOR, 'div.LilCards-module_product_wrapper__FkNih')
 
         for card in cards:
             try:
@@ -56,61 +60,23 @@ def get_dupont_listings():
                 except:
                     price = 0.0
 
-                image_elems = card.find_elements(By.TAG_NAME, 'img')
-                image_elem = None
-                for img in image_elems:
-                    alt = img.get_attribute('alt')
-                    if alt and alt.strip().lower() == 'gallery':
-                        image_elem = img
-                        break
-                if not image_elem:
-                    for img in image_elems:
-                        src = img.get_attribute('src')
-                        srcset = img.get_attribute('srcset')
-                        if (src and src.strip().startswith('http')) or (srcset and any(part.strip().split(' ')[0].startswith('http') for part in srcset.split(','))):
-                            image_elem = img
-                            break
+                # Robust image extraction: get src from img inside the nested structure
+                sleep(1)  # Give time for lazy-loaded images
+                # Scroll card into view to trigger lazy loading
+                driver.execute_script("arguments[0].scrollIntoView();", card)
+                sleep(1)  # Wait for image to load
+
                 image_url = None
-                if image_elem:
-                    src = image_elem.get_attribute('src')
-                    if src and src.strip().startswith('http'):
-                        image_url = src.strip()
-                    if not image_url:
-                        srcset = image_elem.get_attribute('srcset')
-                        if srcset:
-                            for part in srcset.split(','):
-                                url_part = part.strip().split(' ')[0].strip()
-                                if url_part.startswith('http'):
-                                    image_url = url_part
-                                    break
-                    if not image_url:
-                        image_attrs = [
-                            'data-src', 'data-lazy', 'data-original', 'data-img', 'data-srcset', 'data-original-src'
-                        ]
-                        for attr in image_attrs:
-                            val = image_elem.get_attribute(attr)
-                            if val and val.strip().startswith('http'):
-                                image_url = val.strip()
-                                break
-                    if not image_url:
-                        try:
-                            picture_elem = image_elem.find_element(By.XPATH, "ancestor::picture")
-                            source_elems = picture_elem.find_elements(By.TAG_NAME, "source")
-                            for source in source_elems:
-                                srcset = source.get_attribute("srcset")
-                                if srcset:
-                                    for part in srcset.split(','):
-                                        url_part = part.strip().split(' ')[0].strip()
-                                        if url_part.startswith('http'):
-                                            image_url = url_part
-                                            break
-                                if image_url:
-                                    break
-                        except Exception:
-                            pass
-                    if image_url and image_url.startswith("data:"):
-                        image_url = None
-                else:
+                try:
+                    img_elem = card.find_element(By.CSS_SELECTOR, 'div.LilCards-module_img_container__YTuaW a div.CardSlider-module_img_container__PgVf- img')
+                    src = img_elem.get_attribute('src')
+                    if src and src.startswith('http'):
+                        image_url = src
+                        print(f"[DEBUG] Found image in src for card: {title}, url: {src}")
+                    else:
+                        print(f"[DEBUG] After scroll, image src is missing or not http for card: {title}, src: {src}")
+                except Exception as e:
+                    print(f"[DEBUG] Could not find image for card: {title} after scroll, error: {e}")
                     image_url = None
 
                 relative_url = title_elem.get_attribute("href")
