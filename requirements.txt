@@ -6,6 +6,7 @@ python-dotenv
 pydantic
 beautifulsoup4
 selenium
+apscheduler
 webdriver_manager
 requests
 fake-useragent

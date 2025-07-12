@@ -1,5 +1,11 @@
+import os
+from apscheduler.schedulers.blocking import BlockingScheduler
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.models.dupont import DupontListing
+from app.database import Base
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import Options   
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
@@ -7,6 +13,38 @@ from urllib.parse import urljoin
 from time import sleep
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import sys
+
+DATABASE_URL = "postgresql://postgres:Java_123@localhost:5432/luxurycars"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Ensure table exists
+Base.metadata.create_all(bind=engine)
+
+def save_listings_to_db(listings):
+    session = SessionLocal()
+    for item in listings:
+        # Upsert logic: update if listing_url exists, else insert
+        obj = session.query(DupontListing).filter_by(listing_url=item["listing_url"]).first()
+        if obj:
+            for k, v in item.items():
+                setattr(obj, k, v)
+        else:
+            obj = DupontListing(**item)
+            session.add(obj)
+    session.commit()
+    session.close()
+    print(f"[INFO] Saved {len(listings)} listings to DB.")
+
+def scheduled_scrape_and_save():
+    print("[INFO] Running scheduled DuPont scrape...")
+    listings = get_dupont_listings()
+    if listings:
+        save_listings_to_db(listings)
+    else:
+        print("[WARN] No listings scraped.")
 
 def get_dupont_listings():
     chrome_options = Options()
@@ -142,10 +180,20 @@ def get_dupont_listings():
     return all_listings
 
 if __name__ == "__main__":
-    data = get_dupont_listings()
-    for d in data:
-        print(d)
+    if "--manual" in sys.argv:
+        print("[INFO] Manual run triggered.")
+        scheduled_scrape_and_save()
+    else:
+        scheduler = BlockingScheduler(timezone="UTC")
+        scheduler.add_job(scheduled_scrape_and_save, 'cron', hour=0, minute=0)
+        print("[INFO] Scheduler started. Scraper will run every day at 00:00 UTC.")
+        try:
+            scheduler.start()
+        except (KeyboardInterrupt, SystemExit):
+            print("[INFO] Scheduler stopped.")
 
+#PYTHONPATH=. python scrapers/dupont/dupont.py --manual
+#Scheduled Run : PYTHONPATH=. nohup python -u scrapers/dupont/dupont.py > dupont_nohup.log 2>&1 &
 
 
 
