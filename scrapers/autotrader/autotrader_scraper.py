@@ -33,7 +33,8 @@ def extract_location(url):
 def get_autotrader_listings(dataset_ids=None, token=None):
     if dataset_ids is None:
         dataset_ids = [
-            "N6GRo7Ucmc4LhPWNf",  # Autotrader dataset ID
+            "yzQNOu3JsLDz25kCk",  # Autotrader dataset ID
+            "KrzhrZLEg4gBX8cmA",  # Additional Autotrader dataset ID
         ]
     if token is None:
         token = os.getenv("APIFY_API_TOKEN")
